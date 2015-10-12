@@ -1,5 +1,6 @@
 function ChannelList() {
 	this.ids = {};
+    this.chanevents = {};
 }
 
 var channellist = ChannelList.prototype;
@@ -48,6 +49,20 @@ channellist.channels = function() {
 	return this.ids;
 };
 
+channellist.toggleChanEvents = function (id) {
+    if (id in this.chanevents) {
+        delete this.chanevents[id];
+    } else {
+        this.chanevents[id] = true;
+    }
+
+    poStorage.set("chanevents-"+ webclient.serverIP, this.chanevents);
+}
+
+channellist.chanEventsEnabled = function (id) {
+    return id in this.chanevents;
+}
+
 channellist.startObserving = function(channels) {
 	var self = this;
 
@@ -73,4 +88,36 @@ channellist.startObserving = function(channels) {
 $(function() {
 	webclientUI.channels.startObserving(webclient.channels);
     webclientUI.channels.element = $("#channellist");
+
+    webclientUI.channels.element.contextmenu({
+        target: "#channel-context-menu",
+        before: function(event, context) {
+            /* the name of the channel was right clicked instead of the li */
+            if (event.target.tagName.toLowerCase() == "span") {
+                var channel = $(event.target.parentElement);
+            } else {
+                var channel = $(event.target);
+            }
+
+            var id = channel.attr("id");
+            id = id.substr(id.indexOf("-") + 1);
+            var menu = this.getMenu();
+
+            /* Add this once, handler of links on context menu */
+            if (!menu.attr("weaned")) {
+                menu.attr("weaned", true);
+                menu.on("click", "a", webclientUI.linkClickHandler);
+            }
+
+            menu.find("a").each(function(i) {
+                this.href = this.href.substr(0, this.href.lastIndexOf("/") + 1) + id;
+            });
+
+            menu.find("#channels-chanevents-menu").find("a").text(webclientUI.channels.chanEventsEnabled(id) ? "Disable channel events" : "Enable channel events");
+        },
+        onItem: function(context, event) {
+            event.preventDefault();
+            //var item = $(event.target);
+        }
+    });
 });

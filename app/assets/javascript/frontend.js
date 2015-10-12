@@ -231,6 +231,8 @@ $(function() {
                 network.command("register");
             } else if (cmd === "info") {
                 webclientUI.displayPlayerWindow(+payload);
+            } else if (cmd == "chanevents") {
+                webclient.channels.toggleChanEvents(payload);
             }
         } else {
             if (webclient.connectedToServer && !$(this).attr("target")) {
@@ -266,6 +268,11 @@ $(function() {
 
     $("#checkbox-timestamps-dd").prop("checked", webclientUI.timestamps);
     $("#checkbox-idle-dd").prop("checked", poStorage.get("player.idle", 'boolean') === null ? true: poStorage.get("player.idle", 'boolean'));
+
+    webclientUI.channels.chanevents = poStorage.get("chanevents-" + (poStorage.get("relay") || config.relayIP), "object");
+    if (webclientUI.channels.chanevents == null) {
+        webclientUI.channels.chanevents = {};
+    }
 });
 
 window.onbeforeunload = function(e) {
